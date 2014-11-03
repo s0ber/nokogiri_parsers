@@ -11,7 +11,8 @@ class Scenario
     begin
       run()
     rescue => error
-      @verification_errors << error
+      puts error.message
+      puts error.backtrace.join("\n")
     ensure
       teardown()
     end
@@ -24,17 +25,10 @@ class Scenario
     @base_url = "${baseURL}"
     @accept_next_alert = true
     @driver.manage.timeouts.implicit_wait = 30
-    @verification_errors = []
   end
 
   def teardown
     @driver.quit
-    unless @verification_errors.empty?
-      puts 'There were errors'
-      @verification_errors.each do |error|
-        puts error
-      end
-    end
   end
 
   def run

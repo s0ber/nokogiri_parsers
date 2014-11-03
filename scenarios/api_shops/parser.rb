@@ -12,7 +12,8 @@ class Scenario
     begin
       run()
     rescue => error
-      @verification_errors << error
+      puts error.message
+      puts error.backtrace.join("\n")
     ensure
       teardown()
     end
@@ -25,17 +26,10 @@ class Scenario
     @base_url = "http://www.apishops.com"
     @accept_next_alert = true
     @driver.manage.timeouts.implicit_wait = 30
-    @verification_errors = []
   end
 
   def teardown
     @driver.quit
-    unless @verification_errors.empty?
-      @verification_errors.each do |error|
-        puts error
-      end
-      puts 'There were errors'
-    end
   end
 
   def run
@@ -88,11 +82,12 @@ private
     begin
       @wait.until { @driver.find_element(:css, '.producttable') }
     rescue => error
-      @verification_errors << "Can't find element .producttable"
+      puts error.message
+      puts error.backtrace.join("\n")
     end
 
     page = Nokogiri::HTML(@driver.page_source)
-    product_row = page.css('tr[alt]')[1]
+    product_row = page.at_css('tr[alt]')
 
     product = {
       product_id: product_row['alt'],
