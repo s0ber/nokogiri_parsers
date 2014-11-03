@@ -10,7 +10,7 @@ class Scenario
 
     begin
       run()
-    rescue => error
+    rescue Exception => error
       @verification_errors << error
     ensure
       teardown()
@@ -19,9 +19,7 @@ class Scenario
 
   def setup
     @driver = Selenium::WebDriver.for :firefox
-    @wait = Selenium::WebDriver::Wait.new(timeout: 5)
-
-    @base_url = "${baseURL}"
+    @base_url = "http://www.apishops.com/"
     @accept_next_alert = true
     @driver.manage.timeouts.implicit_wait = 30
     @verification_errors = []
@@ -31,14 +29,14 @@ class Scenario
     @driver.quit
     unless @verification_errors.empty?
       puts 'There were errors'
-      @verification_errors.each do |error|
-        puts error
-      end
     end
   end
 
   def run
-
+    @driver.get(@base_url + "/Webmaster/WebsiteGroup/WebsiteGroupList.jsp")
+    @driver.find_element(:link, "Ассортимент").click
+    @driver.find_element(:css, "a.modalCloseImg.simplemodal-close").click
+    @driver.find_element(:id, "useTopHitsA").click
   end
 
   def element_present?(how, what)
