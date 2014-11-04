@@ -93,10 +93,10 @@ private
 
     product_rows.each_with_index do |product_row, i|
       product = {
-        product_id: product_row['alt'],
+        apishops_position_id: product_row['alt'],
         title: filter_string(product_row.at_css('td.pName span').content.capitalize),
-        category_id: product_row.at_css('a.pCategory')['alt'],
-        category_title: filter_string(product_row.at_css('a.pCategory').content.capitalize),
+        apishops_category_id: product_row.at_css('a.pCategory')['alt'],
+        category: filter_string(product_row.at_css('a.pCategory').content.capitalize),
         price: product_row.at_css('td.price')['alt'],
         profit: product_row.at_css('td.commission')['alt'],
         availability_level: product_row.css('.avBlock .avRect').length.to_s,
