@@ -94,9 +94,9 @@ private
     product_rows.each_with_index do |product_row, i|
       product = {
         product_id: product_row['alt'],
-        title: product_row.at_css('td.pName span').content.capitalize,
+        title: filter_string(product_row.at_css('td.pName span').content.capitalize),
         category_id: product_row.at_css('a.pCategory')['alt'],
-        category_title: product_row.at_css('a.pCategory').content.capitalize,
+        category_title: filter_string(product_row.at_css('a.pCategory').content.capitalize),
         price: product_row.at_css('td.price')['alt'],
         profit: product_row.at_css('td.commission')['alt'],
         availability_level: product_row.css('.avBlock .avRect').length.to_s,
@@ -111,6 +111,10 @@ private
       @driver.find_element(:link, 'Следующая →').click
       parse_page()
     end
+  end
+
+  def filter_string(string)
+    string.strip.gsub(/\s\s+/, "\s")
   end
 
   def get_image(node)
