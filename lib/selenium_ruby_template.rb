@@ -1,5 +1,6 @@
 scenarios_data = []
 
+require 'nokogiri'
 require 'selenium-webdriver'
 
 class Scenario
