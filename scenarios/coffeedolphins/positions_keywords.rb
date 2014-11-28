@@ -21,11 +21,10 @@ class Scenario
 
   def setup
     @driver = Selenium::WebDriver.for :firefox
-    @wait = Selenium::WebDriver::Wait.new(timeout: 5)
+    @wait = Selenium::WebDriver::Wait.new(timeout: 30)
 
     @base_url = "http://0.0.0.0:3000"
     @accept_next_alert = true
-    @driver.manage.timeouts.implicit_wait = 30
   end
 
   def teardown
@@ -40,6 +39,8 @@ class Scenario
     @driver.find_element(:id, "new_user_password").send_keys "ritamargarita"
     @driver.find_element(:css, '[type="submit"]').click
 
+    @wait.until { @driver.find_element(:css, '[data-component="app#items_list"]') }
+
     parse_page()
   end
 
@@ -47,17 +48,17 @@ private
 
   def parse_page
     @driver.find_elements(:css, '[data-view="item"]').each do |position|
-
       keywords = position.find_elements(:css, '.panel_list-value .tags-item')
-      next if keywords.empty?
 
-      edit_button = position.find_element(:css, '[data-role="edit_item_button"]')
-      edit_button.click
+      if keywords.any?
+        edit_button = position.find_element(:css, '[data-role="edit_item_button"]')
+        edit_button.click
 
-      submit_button = position.find_element(:css, '.form-actions .small_button.is-green[type="submit"]')
-      submit_button.click
+        submit_button = @wait.until { position.find_element(:css, '.form-actions .small_button.is-green[type="submit"]') }
+        submit_button.click
 
-      @wait.until { position.find_element(:css, 'span.status.is-gray') }
+        @wait.until { position.find_element(:css, 'span.status.is-gray') }
+      end
     end
   end
 
