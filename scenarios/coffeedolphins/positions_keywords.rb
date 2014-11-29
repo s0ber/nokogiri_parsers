@@ -25,14 +25,43 @@ class Scenario
 
     @base_url = "http://0.0.0.0:3000"
     @accept_next_alert = true
+
+    @wordstat = Selenium::WebDriver.for :firefox
+    @keywords_num = 1
   end
 
   def teardown
     @driver.quit
+    @wordstat.quit
   end
 
   def run
+    login_yandex()
+    login_coffee()
+
+    parse_page()
+  end
+
+private
+
+  def login_yandex
+    @wordstat.get('http://yandex.ru')
+
+    login_popup = @wait.until { @wordstat.find_element(:css, '.popup.popup_visibility_visible') }
+    login_popup.find_element(:css, '[name="login"]').clear
+    login_popup.find_element(:css, '[name="login"]').send_keys 'serjio90'
+    login_popup.find_element(:css, '[name="passwd"]').clear
+    login_popup.find_element(:css, '[name="passwd"]').send_keys 'HOoQSLXjiEVVguJ9zu'
+
+    login_button = @wait.until { login_popup.find_element(:css, '.auth__button .button.button_js_inited') }
+    login_button.click
+
+    @wait.until { @wordstat.find_element(:css, '.js-header-user-name') }
+  end
+
+  def login_coffee
     @driver.get(@base_url + "/login")
+
     @driver.find_element(:id, "new_user_email").clear
     @driver.find_element(:id, "new_user_email").send_keys "coffeedolphins@gmail.com"
     @driver.find_element(:id, "new_user_password").clear
@@ -40,26 +69,68 @@ class Scenario
     @driver.find_element(:css, '[type="submit"]').click
 
     @wait.until { @driver.find_element(:css, '[data-component="app#items_list"]') }
-
-    parse_page()
   end
-
-private
 
   def parse_page
     @driver.find_elements(:css, '[data-view="item"]').each do |position|
       keywords = position.find_elements(:css, '.panel_list-value .tags-item')
 
       if keywords.any?
-        edit_button = position.find_element(:css, '[data-role="edit_item_button"]')
-        edit_button.click
+        position.find_element(:css, '[data-role="edit_item_button"]').click
 
-        submit_button = @wait.until { position.find_element(:css, '.form-actions .small_button.is-green[type="submit"]') }
-        submit_button.click
+        position_form = @wait.until { position.find_element(:css, '.panel_item .panel_item-body:not([data-role="item-info"])') }
+        get_keywords_for_position(position_form)
+
+        position_form.find_element(:css, '[type="submit"]').click
 
         @wait.until { position.find_element(:css, 'span.status.is-gray') }
       end
     end
+
+    if element_present?(:css, '.pagination-next a')
+      link = @driver.find_element(:css, '.pagination-next a')
+      link_path = link.attribute('href')
+
+      @driver.get(link_path)
+      @wait.until { @driver.find_element(:css, '[data-component="app#items_list"]') }
+      parse_page()
+    end
+  end
+
+  def get_keywords_for_position(position_form)
+    @wait.until { position_form.find_element(:css, '[data-role="keywords-container"]') }
+    keywords = position_form.find_elements(:css, '[data-role="keyword"]')
+
+    keywords.each do |keyword|
+      if (@keywords_num % 10 == 0)
+        puts '10 keywords were parsed, making a 10 second timeout...'
+        sleep 10
+      end
+      keyword_name = keyword.attribute('data-name')
+      keyword_count = get_keyword_stat(keyword_name.to_s)
+
+      keyword.find_element(:css, '[type="text"]').clear
+      keyword.find_element(:css, '[type="text"]').send_keys keyword_count
+    end
+  end
+
+  def get_keyword_stat(keyword_name)
+    @keywords_num += 1
+
+    sleep 1
+    search_count_value = nil
+
+    while search_count_value.nil? do
+      begin
+        @wordstat.get("http://wordstat.yandex.ru/#!/?words=#{keyword_name}")
+        search_count = @wait.until { @wordstat.find_element(:css, '.b-phrases__td-count') }
+        search_count_value = search_count.text.gsub(/\D/, '')
+      rescue
+        puts 'FUCK YOU, YANDEX'
+      end
+    end
+
+    search_count_value
   end
 
   def element_present?(how, what)
