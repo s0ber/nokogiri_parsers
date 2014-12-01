@@ -23,7 +23,7 @@ class Scenario
     @driver = Selenium::WebDriver.for :firefox
     @wait = Selenium::WebDriver::Wait.new(timeout: 30)
 
-    @base_url = "http://0.0.0.0:3000"
+    @base_url = "http://coffeedolphins.ru"
     @accept_next_alert = true
 
     @wordstat = Selenium::WebDriver.for :firefox
@@ -117,14 +117,20 @@ private
   def get_keyword_stat(keyword_name)
     @keywords_num += 1
 
-    sleep 1
+    sleep 2
     search_count_value = nil
 
     while search_count_value.nil? do
       begin
         @wordstat.get("http://wordstat.yandex.ru/#!/?words=#{keyword_name}")
-        search_count = @wait.until { @wordstat.find_element(:css, '.b-phrases__td-count') }
-        search_count_value = search_count.text.gsub(/\D/, '')
+        search_count_text = @wait.until { @wordstat.find_element(:css, '.b-phrases__info') }
+        matcher = /—(.+)показ/.match(search_count_text.text)
+
+        if matcher[1]
+          search_count_value = matcher[1].gsub(/\D/, '')
+        else
+          search_count_value = 0
+        end
       rescue
         puts 'FUCK YOU, YANDEX'
       end
