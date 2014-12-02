@@ -27,7 +27,6 @@ class Scenario
     @accept_next_alert = true
 
     @wordstat = Selenium::WebDriver.for :firefox
-    @keywords_num = 1
   end
 
   def teardown
@@ -102,10 +101,6 @@ private
     keywords = position_form.find_elements(:css, '[data-role="keyword"]')
 
     keywords.each do |keyword|
-      if (@keywords_num % 10 == 0)
-        puts '10 keywords were parsed, making a 10 second timeout...'
-        sleep 10
-      end
       keyword_name = keyword.attribute('data-name')
       keyword_count = get_keyword_stat(keyword_name.to_s)
 
@@ -115,13 +110,14 @@ private
   end
 
   def get_keyword_stat(keyword_name)
-    @keywords_num += 1
-
-    sleep 2
+    sleep 4
     search_count_value = nil
 
     while search_count_value.nil? do
       begin
+        @wordstat.get("http://yandex.ru/")
+        @wait.until { @wordstat.find_element(:css, '.input__input') }
+        sleep 4
         @wordstat.get("http://wordstat.yandex.ru/#!/?words=#{keyword_name}")
         search_count_text = @wait.until { @wordstat.find_element(:css, '.b-phrases__info') }
         matcher = /—(.+)показ/.match(search_count_text.text)
